@@ -1,0 +1,29 @@
+{
+  "version": "2.0",
+  "functions": [],
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "excludedTypes": "Request"
+      }
+    },
+    "logLevel": {
+      "default": "Error"
+    }
+  },
+  "extensionBundle": {
+    "id": "Microsoft.Azure.Functions.ExtensionBundle",
+    "version": "[4.*, 5.0.0)"
+  },
+  "extensions": {
+    "queues": {
+      "messageEncoding": "none",
+      "batchSize": 1,
+      "maxPollingInterval": "00:00:01"
+    },
+    "blobs": {
+      "maxDegreeOfParallelism": 4
+    }
+  }
+}

@@ -1,0 +1,32 @@
+[project]
+name = "bingefriend-show-sync"
+version = "0.1.0"
+description = ""
+authors = [
+    { name = "Tom Boone", email = "tbc@tomboone.com"}
+]
+requires-python = ">=3.12"
+license = "MIT"
+readme = "README.md"
+dependencies = [
+    "tvbingefriend-tvmaze-models >= 0.1.0",
+    "tvbingefriend-tvmaze-client >= 0.1.0",
+    "azure-functions >= 1.23.0",
+    "azure-storage-blob >= 12.26.0",
+    "azure-storage-queue (>=12.13.0,<13.0.0)",
+    "azure-data-tables (>=12.7.0,<13.0.0)",
+    "alembic (>=1.16.4,<2.0.0)",
+    "pymysql (>=1.1.1,<2.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[[tool.poetry.source]]
+name = "TBC_Feed"
+url = "https://pkgs.dev.azure.com/tomboonedotcom/BingeFriend/_packaging/TBC_Feed/pypi/simple/"
+priority = "primary"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

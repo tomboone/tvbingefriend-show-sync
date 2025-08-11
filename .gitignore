@@ -55,5 +55,3 @@ azurite-data
 .vscode
 
 *.sql
-
-poetry.lock

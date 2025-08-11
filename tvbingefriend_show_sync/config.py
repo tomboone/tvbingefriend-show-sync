@@ -29,12 +29,10 @@ TVMAZE_SEASONS_EPISODES_QUEUE = os.getenv("TVMAZE_SEASONS_EPISODES_QUEUE", "tvse
 
 # Season storage
 TVMAZE_SEASONS_CONTAINER = os.getenv("TVMAZE_SEASONS_CONTAINER", "tvseasonscontainer")
-SEASON_STAGE_CONTAINER = os.getenv("SEASON_STAGE_CONTAINER", "seasonstagecontainer")
 SEASON_UPSERT_CONTAINER = os.getenv("SEASON_UPSERT_CONTAINER", "seasonupsertcontainer")
 
 # Episode storage
 TVMAZE_EPISODES_CONTAINER = os.getenv("TVMAZE_EPISODES_CONTAINER", "tvepisodescontainer")
-EPISODE_STAGE_CONTAINER = os.getenv("EPISODE_STAGE_CONTAINER", "episodestagecontainer")
 EPISODE_UPSERT_CONTAINER = os.getenv("EPISODE_UPSERT_CONTAINER", "episodeupsertcontainer")
 
 # Update storage

@@ -1,5 +1,12 @@
 {
   "version": "2.0",
+  "retry": {
+    "strategy": "exponentialBackoff",
+    "maxRetryCount": 5,
+    "delayInterval": "00:00:05",
+    "minimumInterval": "00:00:03",
+    "maximumInterval": "00:00:30"
+  },
   "functions": [],
   "logging": {
     "applicationInsights": {

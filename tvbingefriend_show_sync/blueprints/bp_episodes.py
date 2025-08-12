@@ -28,10 +28,20 @@ def stage_show_episodes_for_upsert(stageshowepisodes: func.InputStream) -> None:
     Args:
         stageshowepisodes (func.InputStream): Blob input stream
     """
-    episode_data: dict[str, Any] = json.loads(stageshowepisodes.read())  # get episode data from blob
-
-    episode_service: EpisodeService = EpisodeService()
-    episode_service.stage_episodes(episode_data)  # stage episodes for upsert
+    logging.info(f"stage_show_episodes_for_upsert: Processing blob {stageshowepisodes.name}.")
+    try:
+        episode_data: dict[str, Any] = json.loads(stageshowepisodes.read())  # get episode data from blob
+        show_id = episode_data.get("show_id", "N/A")
+        logging.info(f"stage_show_episodes_for_upsert: Staging episodes for show_id: {show_id} from {stageshowepisodes.name}.")
+        episode_service: EpisodeService = EpisodeService()
+        episode_service.stage_episodes(episode_data)  # stage episodes for upsert
+        logging.info(f"stage_show_episodes_for_upsert: Successfully staged episodes for show_id: {show_id}.")
+    except Exception as e:
+        logging.error(
+            f"stage_show_episodes_for_upsert: Unhandled exception for blob {stageshowepisodes.name}. Error: {e}",
+            exc_info=True
+        )
+        raise
 
 
 @bp.function_name(name="upsert_episode")
@@ -46,11 +56,9 @@ def upsert_episode(upsertepisode: func.InputStream) -> None:
     Args:
         upsertepisode (func.InputStream): Blob input stream
     """
-    episode: dict[str, Any] = json.loads(upsertepisode.read())  # get episode from blob
-
     logging.info(f"upsert_episode: Processing blob {upsertepisode.name}")
-
     try:
+        episode: dict[str, Any] = json.loads(upsertepisode.read())  # get episode from blob
         episode_service: EpisodeService = EpisodeService()  # create episode service
         with db_session_manager() as db:
             episode_service.upsert_episode(episode, db)  # upsert episode

@@ -29,10 +29,20 @@ def stage_show_seasons_for_upsert(stageshowseasons: func.InputStream) -> None:
     Args:
         stageshowseasons (func.InputStream): Blob input stream
     """
-    season_data: dict[str, Any] = json.loads(stageshowseasons.read())  # get season data from blob
-
-    season_service: SeasonService = SeasonService()
-    season_service.stage_seasons(season_data)  # stage seasons for upsert
+    logging.info(f"stage_show_seasons_for_upsert: Processing blob {stageshowseasons.name}.")
+    try:
+        season_data: dict[str, Any] = json.loads(stageshowseasons.read())  # get season data from blob
+        show_id = season_data.get("show_id", "N/A")
+        logging.info(f"stage_show_seasons_for_upsert: Staging seasons for show_id: {show_id} from {stageshowseasons.name}.")
+        season_service: SeasonService = SeasonService()
+        season_service.stage_seasons(season_data)  # stage seasons for upsert
+        logging.info(f"stage_show_seasons_for_upsert: Successfully staged seasons for show_id: {show_id}.")
+    except Exception as e:
+        logging.error(
+            f"stage_show_seasons_for_upsert: Unhandled exception for blob {stageshowseasons.name}. Error: {e}",
+            exc_info=True
+        )
+        raise
 
 
 @bp.function_name(name="upsert_season")
@@ -47,11 +57,10 @@ def upsert_season(upsertseason: func.InputStream) -> None:
     Args:
         upsertseason (func.InputStream): Blob input stream
     """
-    season: dict[str, Any] = json.loads(upsertseason.read())  # get season from blob
-
     logging.info(f"upsert_season: Processing blob {upsertseason.name}")
 
     try:
+        season: dict[str, Any] = json.loads(upsertseason.read())  # get season from blob
         season_service: SeasonService = SeasonService()  # create season service
         with db_session_manager() as db:
             season_service.upsert_season(season, db)  # upsert season

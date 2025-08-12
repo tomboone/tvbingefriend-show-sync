@@ -85,15 +85,28 @@ def get_show_update_details(updateshowmsg: func.QueueMessage) -> None:
     Args:
         updateshowmsg (func.QueueMessage): Queue message
     """
-    message: dict[str, Any] = updateshowmsg.get_json()  # get message from queue
-    show_id = message.get("show_id")
+    logging.info(
+        f"get_show_update_details: Processing queue message ID: {updateshowmsg.id}, "
+        f"DequeueCount: {updateshowmsg.dequeue_count}"
+    )
+    try:
+        message: dict[str, Any] = updateshowmsg.get_json()  # get message from queue
+        show_id = message.get("show_id")
 
-    if not show_id:
-        logging.error("Received show update message without a 'show_id'. Aborting.")
-        return
+        if not show_id:
+            logging.error("Received show update message without a 'show_id'. Aborting.")
+            return
 
-    update_service: UpdateService = UpdateService()  # create update service
-    update_service.get_show_update_details(show_id)  # get show update details
+        logging.info(f"get_show_update_details: Getting update details for show_id: {show_id}")
+        update_service: UpdateService = UpdateService()  # create update service
+        update_service.get_show_update_details(show_id)  # get show update details
+        logging.info(f"get_show_update_details: Successfully processed show_id: {show_id}")
+    except Exception as e:
+        logging.error(
+            f"get_show_update_details: Unhandled exception for message ID {updateshowmsg.id}. Error: {e}",
+            exc_info=True
+        )
+        raise
 
 
 @bp.function_name(name="stage_season_episode_updates_for_upsert")
@@ -108,6 +121,16 @@ def stage_season_episode_updates_for_upsert(stageblob: func.InputStream) -> None
     Args:
         stageblob (func.InputStream): Blob input stream
     """
-    updates: dict[str, Any] = json.loads(stageblob.read())  # get updates from blob
-    update_service: UpdateService = UpdateService()  # create update service
-    update_service.stage_updates_for_upsert(updates)  # stage updates for upsert
+    logging.info(f"stage_season_episode_updates_for_upsert: Processing blob {stageblob.name}.")
+    try:
+        updates: dict[str, Any] = json.loads(stageblob.read())  # get updates from blob
+        logging.info(f"stage_season_episode_updates_for_upsert: Staging {len(updates)} updates from {stageblob.name}.")
+        update_service: UpdateService = UpdateService()  # create update service
+        update_service.stage_updates_for_upsert(updates)  # stage updates for upsert
+        logging.info(f"stage_season_episode_updates_for_upsert: Successfully staged updates from {stageblob.name}.")
+    except Exception as e:
+        logging.error(
+            f"stage_season_episode_updates_for_upsert: Unhandled exception for blob {stageblob.name}. Error: {e}",
+            exc_info=True
+        )
+        raise

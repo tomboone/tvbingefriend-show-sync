@@ -35,10 +35,21 @@ def start_get_seasons_episodes(req: func.HttpRequest) -> func.HttpResponse:
 )
 def stage_show_ids_for_retrieval(stageshowidsblob: func.InputStream) -> None:
     """Blob-triggered function to queue up individual show IDs for processing."""
-    logging.info(f"stage_show_ids_for_retrieval: Blob trigger function processed blob {stageshowidsblob.name}.")
-    show_ids: List[int] = json.loads(stageshowidsblob.read())
-    seasons_episodes_service = SeasonsEpisodesService()
-    seasons_episodes_service.stage_show_ids_for_retrieval(show_ids)
+    logging.info(f"stage_show_ids_for_retrieval: Processing blob {stageshowidsblob.name}.")
+    try:
+        show_ids: List[int] = json.loads(stageshowidsblob.read())
+        logging.info(
+            f"stage_show_ids_for_retrieval: Staging {len(show_ids)} show IDs from blob {stageshowidsblob.name}."
+        )
+        seasons_episodes_service = SeasonsEpisodesService()
+        seasons_episodes_service.stage_show_ids_for_retrieval(show_ids)
+        logging.info(f"stage_show_ids_for_retrieval: Successfully staged show IDs from blob {stageshowidsblob.name}.")
+    except Exception as e:
+        logging.error(
+            f"stage_show_ids_for_retrieval: Unhandled exception for blob {stageshowidsblob.name}. Error: {e}",
+            exc_info=True
+        )
+        raise
 
 
 @bp.function_name("get_show_seasons_episodes")
@@ -49,10 +60,23 @@ def stage_show_ids_for_retrieval(stageshowidsblob: func.InputStream) -> None:
 )
 def get_show_seasons_episodes(getshowseasonsepisodes: func.QueueMessage) -> None:
     """Queue-triggered function to fetch seasons/episodes for a single show."""
-    logging.info(f"get_show_seasons_episodes: Queue trigger function processed message ID: {getshowseasonsepisodes.id}")
-    msg: dict[str, Any] = getshowseasonsepisodes.get_json()
-    seasons_episodes_service = SeasonsEpisodesService()
-    seasons_episodes_service.get_show_seasons_episodes(msg)
+    logging.info(
+        f"get_show_seasons_episodes: Processing queue message ID: {getshowseasonsepisodes.id}, "
+        f"DequeueCount: {getshowseasonsepisodes.dequeue_count}"
+    )
+    try:
+        msg: dict[str, Any] = getshowseasonsepisodes.get_json()
+        show_id = msg.get("show_id", "N/A")
+        logging.info(f"get_show_seasons_episodes: Fetching seasons/episodes for show_id: {show_id}")
+        seasons_episodes_service = SeasonsEpisodesService()
+        seasons_episodes_service.get_show_seasons_episodes(msg)
+        logging.info(f"get_show_seasons_episodes: Successfully processed show_id: {show_id}")
+    except Exception as e:
+        logging.error(
+            f"get_show_seasons_episodes: Unhandled exception for message ID {getshowseasonsepisodes.id}. Error: {e}",
+            exc_info=True
+        )
+        raise
 
 
 @bp.function_name("stage_show_seasons_episodes")
@@ -63,8 +87,20 @@ def get_show_seasons_episodes(getshowseasonsepisodes: func.QueueMessage) -> None
 )
 def stage_show_seasons_episodes(stageshowseasonsepisodes: func.InputStream) -> None:
     """Blob-triggered function to process a show's raw data and stage its seasons and episodes."""
-    logging.info(f"stage_show_seasons_episodes: Blob trigger function processed blob {stageshowseasonsepisodes.name}.")
-    show_data: dict[str, Any] = json.loads(stageshowseasonsepisodes.read())
-
-    seasons_episodes_service: SeasonsEpisodesService = SeasonsEpisodesService()
-    seasons_episodes_service.stage_show_seasons_episodes(show_data)
+    logging.info(f"stage_show_seasons_episodes: Processing blob {stageshowseasonsepisodes.name}.")
+    try:
+        show_data: dict[str, Any] = json.loads(stageshowseasonsepisodes.read())
+        show_id = show_data.get("id", "N/A")
+        logging.info(
+            f"stage_show_seasons_episodes: Staging seasons/episodes for show_id: {show_id} "
+            f"from blob {stageshowseasonsepisodes.name}."
+        )
+        seasons_episodes_service: SeasonsEpisodesService = SeasonsEpisodesService()
+        seasons_episodes_service.stage_show_seasons_episodes(show_data)
+        logging.info(f"stage_show_seasons_episodes: Successfully staged seasons/episodes for show_id: {show_id}.")
+    except Exception as e:
+        logging.error(
+            f"stage_show_seasons_episodes: Unhandled exception for blob {stageshowseasonsepisodes.name}. Error: {e}",
+            exc_info=True
+        )
+        raise

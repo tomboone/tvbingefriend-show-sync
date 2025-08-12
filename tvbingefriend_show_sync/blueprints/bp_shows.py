@@ -96,10 +96,19 @@ def stage_shows_for_upsert(stageblob: func.InputStream) -> None:
     Args:
         stageblob (func.InputStream): Blob input stream
     """
-    shows: list[dict[str, Any]] = json.loads(stageblob.read())  # get shows from blob
-
-    show_service: ShowService = ShowService()  # create show service
-    show_service.stage_shows_for_upsert(shows)  # stage shows for upsert
+    logging.info(f"stage_shows_for_upsert: Processing blob {stageblob.name}.")
+    try:
+        shows: list[dict[str, Any]] = json.loads(stageblob.read())  # get shows from blob
+        logging.info(f"stage_shows_for_upsert: Staging {len(shows)} shows from blob {stageblob.name}.")
+        show_service: ShowService = ShowService()  # create show service
+        show_service.stage_shows_for_upsert(shows)  # stage shows for upsert
+        logging.info(f"stage_shows_for_upsert: Successfully staged shows from blob {stageblob.name}.")
+    except Exception as e:
+        logging.error(
+            f"stage_shows_for_upsert: Unhandled exception for blob {stageblob.name}. Error: {e}",
+            exc_info=True
+        )
+        raise
 
 
 @bp.function_name(name="upsert_show")
@@ -114,14 +123,17 @@ def upsert_show(upsertblob: func.InputStream) -> None:
     Args:
         upsertblob (func.InputStream): Blob input stream
     """
-    show: dict[str, Any] = json.loads(upsertblob.read())  # get show data from blob
-
-    show_service: ShowService = ShowService()  # create show service
+    logging.info(f"upsert_show: Processing blob {upsertblob.name}")
 
     try:
+        show: dict[str, Any] = json.loads(upsertblob.read())  # get show data from blob
+        show_service: ShowService = ShowService()  # create show service
         with db_session_manager() as db:
             show_service.upsert_show(show, db)  # upsert show
+        logging.info(f"upsert_show: Successfully upserted show from blob {upsertblob.name}")
     except Exception as e:  # catch errors and log them
         logging.error(
-            msg=f"bp_shows.upsert_show: Error upserting show: {e}"
+            f"upsert_show: Unhandled exception for blob {upsertblob.name}. Error: {e}",
+            exc_info=True
         )
+        raise
